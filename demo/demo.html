@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<title></title>
+          <!-- Meta tags -->
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="Content-Style-Type" content="text/css" />  <!-- w3c recomends this meta tag  -->
+	<meta http-equiv="Content-Script-Type" content="text/javascript" />  <!-- w3c recomends this meta tag  -->
+	<meta name="keywords" content="" />
+	<meta name="description" content="" />
+	<meta name="copyright" content="" />
+	<meta name="author" content="" />
+	<meta name="rating" content="general" />
+	<meta name="robots" content="all" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <!-- Stylesheets -->
+	<link rel="stylesheet" href="css/style.css" type="text/css" media="screen, projection" />
+	    <!-- Javascripts -->
+    <script language="javascript" type="text/javascript" src="js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+    <script language="javascript" type="text/javascript" src="js/markermanager.js"></script>    
+    <script language="javascript" type="text/javascript" src="js/markercluster.js"></script>  
+    <script language="javascript" type="text/javascript" src="js/map1.0.js"></script>
+    <script language="javascript" type="text/javascript">
+    		$(document).ready(function(){
+				$("#mapPane").MapMe({
+					mapCanvas : 'mapPane',
+					mapCenter : [-33.890542, 151.374856],
+					markerCluster : true,
+					markers : [							  				
+								['Bondi Beach', -33.890542, 151.274856, false, "<h1>Bondi Info Window Content</h1><p>lorem ipsum</p>"],
+								['Coogee Beach', -33.923036, 151.259052, "myCustomPin", "<h1>Coogee Info Window Content</h1><p>lorem ipsum</p>"],
+								['Cronulla Beach', -34.028249, 151.157507, "myCustomPin", "<h1>Cronulla Info Window Content</h1><p>lorem ipsum</p>"],
+								['Manly Beach', -33.80010128657071, 151.28747820854187, false, false],
+								['Maroubra Beach', -33.950198, 151.259302, "myCustomPin", "<h1>Maroubra Info Window Content</h1><p>lorem ipsum</p>"]																						
+							  ],					   
+				});
+				
+			});
+    </script>
+
+</head>
+
+<body>
+
+      <div id="wrap">
+      
+      	   <div id="mapPane"></div>      	   
+
+      </div>  <!-- end of wrap div -->
+      
+</body>
+</html>
