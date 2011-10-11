@@ -196,11 +196,12 @@
 			for (var i = 0; i < markers.length; i++)
 			{
 				var pin = markers[i];
-				//console.log(markers[i][3]);
-				var infoWindow = markers[i][4];
+				//console.log(markers[i]["infoWindow"]);
+				var infoWindow = markers[i]["infoWindow"];
+				var pinEvents = markers[i]["pinEvent"];
 				// check to see if a custom pin has been assigned - else drop in a regular pin
 				// i need to return the marker so I can attach events to it in a different function
-				if (markers[i][3])
+				if (markers[i]["pin"])
 				{
 					// then go make a custom pin marker
 					var currentPin = $.fn.MapMe.customPin(mapObject, opts, pin);
@@ -208,11 +209,11 @@
 				else
 				{
 					// make a regular pin marker
-					var pinPosition = new google.maps.LatLng(pin[1], pin[2]),
+					var pinPosition = new google.maps.LatLng(pin["lat"], pin["lng"]),
 						currentPin = new google.maps.Marker({
 							position: pinPosition,
 							map: mapObject,
-							title: pin[0] 
+							title: pin["title"] 
 						});
 				}
 								
@@ -220,6 +221,12 @@
 				if (infoWindow)
 				{
 					$.fn.MapMe.addInfoWindow(mapObject, opts, currentPin, infoWindow);
+				}
+				
+				// add pin events
+				if (pinEvents)
+				{
+					$.fn.MapMe.addPinEvents(mapObject, opts, pinEvents, currentPin);
 				}
 				// store all the pins together into an array
 				markerArray.push(currentPin);
@@ -230,31 +237,45 @@
 		// else if there is an option to drop a pin on the center of the map, then do that
 		if (opts.pinCenter == true)
 		{
-			if (opts.centerMarker[3])
-			{
-				var marker = $.fn.MapMe.customPin(mapObject, opts, opts.centerMarker);
-			}
-			else
-			{
-				marker = new google.maps.Marker({
-					position: opts.mapOptions.center,
-					title: opts.centerMarker[0],
-					map: mapObject
-				});
-				marker.setMap(mapObject);
-			}
-			
-			// set the info window for the center marker
-			var infoWindow = opts.centerMarker[4];
-			if (infoWindow)
-			{
-				$.fn.MapMe.addInfoWindow(mapObject, opts, marker, infoWindow);
-			}
+			var centerMarker = $.fn.MapMe.addCentrePin(mapObject, opts);
 			// add the center pin to the array of markers
-			markerArray.push(marker);
+			// if I want to add the center pin to marker manager I would put an option to test and then run this next line
+			// markerArray.push(centerMarker);
 		}
 		
 		return markerArray;
+	};
+	
+	// add center pin to the map
+	$.fn.MapMe.addCentrePin = function(mapObject, opts)
+	{
+		if (opts.centerMarker["pin"])
+		{
+			var marker = $.fn.MapMe.customPin(mapObject, opts, opts.centerMarker);
+		}
+		else
+		{
+			marker = new google.maps.Marker({
+				position: opts.mapOptions.center,
+				title: opts.centerMarker["title"],
+				map: mapObject
+			});
+			marker.setMap(mapObject);
+		}
+		
+		// set the info window for the center marker
+		var infoWindow = opts.centerMarker["infoWindow"];
+		if (infoWindow)
+		{
+			$.fn.MapMe.addInfoWindow(mapObject, opts, marker, infoWindow);
+		}
+		
+		return marker;
+	};
+	
+	// add pins to the map
+	$.fn.MapMe.addMapPin()
+	{
 	};
 	
 	// make a custom pin for the marker and then drop it onto the map
@@ -262,7 +283,7 @@
 	{		
 		// custom pin object reference
 		
-		var pinReference = pin[3];
+		var pinReference = pin["pin"];
 		if (!opts.customPins[pinReference])
 		{
 			alert("custom pin has not been defined properly");
@@ -290,7 +311,7 @@
 			shape = "";
 		}	
 		// set custom pin position	
-		var pinPosition = new google.maps.LatLng(pin[1], pin[2]);
+		var pinPosition = new google.maps.LatLng(pin["lat"], pin["lng"]);
 		
 		//console.log(pinPosition);
 		// make the marker and put it onto the map
@@ -301,9 +322,18 @@
 			icon: image,
 			// need to test for the shape and decide whether to include it or not
 			shape: shape,			
-			title: pin[0]
+			title: pin["title"]
 		});	
 		return marker;				
+	};
+	
+	$.fn.MapMe.addPinEvents = function(mapObject, opts, pinEvents, currentPin)
+	{
+		for (var name in pinEvents)
+		{			
+			var event = pinEvents[name];
+			google.maps.event.addListener(currentPin, name, event);
+		}
 	};
 	
 	// add an infoWindow to the pin marker
