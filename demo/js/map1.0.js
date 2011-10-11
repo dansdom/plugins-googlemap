@@ -273,11 +273,6 @@
 		return marker;
 	};
 	
-	// add pins to the map
-	$.fn.MapMe.addMapPin()
-	{
-	};
-	
 	// make a custom pin for the marker and then drop it onto the map
 	$.fn.MapMe.customPin = function(mapObject, opts, pin)
 	{		
