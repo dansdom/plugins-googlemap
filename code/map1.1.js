@@ -18,12 +18,20 @@
 //				    options: go here
 //				});				
 //			});
-
-// TO DO:
+//
+// v 1.0	- basic functionality, custom pins, custom events, markerclusterer plugin, map options and info windows
+// v 1.1 	- fixed bug with geolocation
+//			- added option to 'track' the user on the map. this will add a center pin, on a given time period it will update the maps center position
+//			- fixed issues with the definition of the center pin. now you can define your own center pin
+//			- renaming a few variables so that they make a little more sense
+//			- combined mapCenter and trackLOcation variables :)
+//
+//  IMPORTANT!!! - I'm still trying to make this work on the happy hour app
 
 // Custom Pin:
 // for each custom pin the setting can be turned off by using "false", 
 // required: lat and lng
+// need to write in a track location option/function. "trackLocation:true"
 
 // if markerCluster is set to true, then the markers on the page will be clustered using the marker cluster script.
 // this script needs to be included in the HTML
@@ -44,30 +52,18 @@
 //			'backgroundPosition': (string) The position of the backgound x, y.
 
 (function($){
-
-	// I have decided that rather than loading the script dynamically, the user must include it in the head of the document
-	// as well as the markerCluster script if they want to use that too
-	/*
-	loadScript = function(box,opts)
-		{
-			alert("loading script");
-			var googleScript = document.createElement("script");
-			googleScript.type = "text/javascript";
-			googleScript.src = "http://maps.googleapis.com/maps/api/js?sensor=false";
-			document.body.appendChild(googleScript);
-		};
-	document.onload = loadScript();
-	*/
 	
 	$.fn.MapMe = function(config)
 	{
 		// config - default settings
 		var settings = {
-                              mapCanvas : 'mapPane',  // the id of the map canvas
-                              mapCenter : [80, 80],  // option - "current" position, or array of [lat/lng] values
+                              mapCanvas : "mapPane",  // the id of the map canvas                         
                               pinCenter : true, 
+                              trackLocation : true,
+                              trackingPeriod : false,  // if set to false then it won't 'track' the user, only center the map initially on user location
+                              trackingCircle : true,
                               // same object parameters as the markers list 
-                              centerMarker : [], //["center marker", -33.890542, 151.374856, "myCustomPin", "<h1>this is the center pin</h1>"],	
+                              centerMarker : {}, // e.g. of a center pin definition - {title:"center marker", pin: "myCustomPin", infoWindow: "<h1>this is the center pin</h1>"},
                               // need to include the script if you want to use it                           
                               markerCluster : false,
                               markerClusterOptions : {
@@ -78,7 +74,6 @@
 																	{height: 78, width: 78, url: "http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/images/m4.png",textColor : "#000",textSize : 16},
 																	{height: 90, width: 90, url: "http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/images/m5.png",textColor : "#000",textSize : 16}
                               									 ],
-                              							gridSize : 60,
                               							minimumClusterSize : 3                              							
                               						 },                                                        
 							  // an example of a custom pin
@@ -96,7 +91,7 @@
 							  									pinShadowAnchor : [22,55]
 							  								 }
 							  				},
-							  markers : [							  				
+							  markers : [
 							  				//[marker title, latitude, longitude, custom pin name, info window text] - set to false if not needed
 							  				// example of some markers
 											//['Bondi Beach', -33.890542, 151.274856, false, "<h1>Bondi Info Window Content</h1><p>lorem ipsum</p>"],
@@ -108,8 +103,8 @@
                               mapOptions : {
                               					// these are the basic styles. 
                               					// this object can be added to with any of the googlemap options when the plugin is called
-					    						zoom: 10,
-					    						center: '80, 80',
+					    						zoom: 12,
+					    						center: [80, 80],
 					    						mapTypeId: google.maps.MapTypeId.ROADMAP,
 					    						mapTypeControl: true,					    						
 					    						panControl: false,
@@ -130,15 +125,24 @@
 		// iterate over each object that calls the plugin and do stuff
 		this.each(function(){														
 						
+			opts.mapOptions.center = new google.maps.LatLng(opts.mapOptions.center[0], opts.mapOptions.center[1]);	
+			// make the map object	
+			//console.log(opts.mapOptions);
+			var mapObject = new google.maps.Map(document.getElementById(opts.mapCanvas), opts.mapOptions);
+			
 			// set the center of the map
-			if (opts.mapCenter == "current")
+			if (opts.trackLocation == true)
 			{
 				// find me the current position of the user
-				opts.mapCenter = $.fn.MapMe.getCurrentPosition();				
+				$.fn.MapMe.getUserPosition(mapObject, opts);
+				// current position takes a while, so I will have to set map center when current position is calculated				
 			}
-			opts.mapOptions.center = new google.maps.LatLng(opts.mapCenter[0], opts.mapCenter[1]);	
-			// make the map object				
-			var mapObject = new google.maps.Map(document.getElementById(opts.mapCanvas), opts.mapOptions);						
+			// if not current but pinCenter is true, then add a pin in the center
+			else if (opts.pinCenter == true)
+			{				
+				var centerPosition = [opts.mapOptions.center["Oa"], opts.mapOptions.center["Pa"]];
+				mapObject.centerMarker = $.fn.MapMe.addCentrePin(mapObject, opts, centerPosition);
+			}
 								
 			// add the markers to the map, return the array of markers
 			var mapMarkers = $.fn.MapMe.setMarkers(mapObject, opts);
@@ -149,6 +153,12 @@
 				var clusterOptions = opts.markerClusterOptions;
 				var cluster = new MarkerClusterer(mapObject, mapMarkers, clusterOptions);
 				//console.log(cluster.getStyles());
+			}
+			
+			// add function that updates the current location of the user
+			if (opts.trackLocation && opts.trackingPeriod)
+			{				
+				var tackingTimer = setTimeout(function(){$.fn.MapMe.updateLocation(mapObject, opts);}, opts.trackingPeriod);
 			}
 						
 		});
@@ -162,27 +172,110 @@
 	// that is why it is a superior namespace. Also: anonymous function calling I think is probably better naming practise too.
 	
 	// get the users current position
-	$.fn.MapMe.getCurrentPosition = function()
+	$.fn.MapMe.getUserPosition = function(mapObject, opts)
 	{
-		var userPosition = [];
+		
+		//console.log("getting my position");		
 		if (navigator.geolocation)
-		{			
-			navigator.geolocation.getCurrentPosition(function(position){
-				userPosition = [position.coords.latitude, position.coords.longitude];
-			});			
+		{	
+			navigator.geolocation.getCurrentPosition(
+				// success function
+				function(position)
+				{					
+					//console.log("this is navigator.geolocation:");
+					//console.log(position.coords);
+					var userPos = [position.coords.latitude, position.coords.longitude];
+					$.fn.MapMe.geoSuccess(mapObject, opts, userPos);
+				},
+				// error function
+				function()
+				{
+					$.fn.MapMe.geoFailure();
+				},
+				// tracking period for calling error
+				{timeout:opts.trackingPeriod});
 		}
 		else if (google.gears)
 		{
-			var geo = google.gears.factory.create('beta.geolocation');
-			geo.getCurrentPosition(function(position){
-				userPosition = [position.latitude, position.longitude];
-			});
+			var geo = google.gears.factory.create('beta.geolocation');			
+			geo.getCurrentPosition(
+				// success function
+				function(position)
+				{	
+					//console.log("this is google gears");				
+					var userPos = [position.latitude, position.longitude];
+					$.fn.MapMe.geoSuccess(mapObject, opts, userPos);
+				},
+				// error function
+				function()
+				{
+					$.fn.MapMe.geoFailure();
+				},
+				// tracking period for calling error
+				{timeout:opts.trackingPeriod});
 		}
 		else
+		{			
+			$.fn.MapMe.geoFailure();
+		}	
+						
+	};
+	
+	// when the browser successfully finds the users cuurent position
+	$.fn.MapMe.geoSuccess = function(mapObject, opts, position)
+	{			
+		// need to make this conditional and if setting center then do it
+		// also I will need to only set this the first time as I got this function going through a loop
+		// console.log(position);
+		// console.log(position);
+		var userPosition = new google.maps.LatLng(position[0], position[1]);
+		// console.log(position);
+		if (!mapObject.centerSet)
 		{
-			userPosition = [80, 80]; // put them in the north sea !!!
+			mapObject.setCenter(userPosition);
 		}
-		return userPosition;
+		mapObject.centerSet = true;
+		
+		// if putting a pin in the center of the map then do so
+		if (opts.pinCenter == true) 
+		{
+			// if the map already has a center pin then remove it
+			if (mapObject.centerMarker)
+			{
+				mapObject.centerMarker.setMap(null);
+				mapObject.centerOverlay.setMap(null);
+			}
+			// need to fill out the center marker here:
+			// I'll need to contruct the center pin object from the map location
+			// set the lat/lng of the center marker
+			// I'M NOT SURE I NEED THIS SWITCH HERE - GOT TO COME BACK TO IT !!!!!!!!!!!!!!!!!!!!!!!
+			if (opts.trackLocation = true) 
+			{
+				//then set the lat/lng of pin
+				opts.centerMarker.lat = position[1];
+				opts.centerMarker.lng = position[0];
+			} 
+			// then call the addCenterPin function
+			
+			mapObject.centerMarker = $.fn.MapMe.addCentrePin(mapObject, opts, position);
+			// going to test creating a circle around the center pin - this is only for beer app for now, but will put it into the plugin later.			
+		}
+	};
+	
+	// when the browser doesn't find the users current position
+	$.fn.MapMe.geoFailure = function(mapObject, opts)
+	{
+		//alert("I couldn't find your current position");
+	};
+	
+	// this function checks the users positions every 10sec and centers the map on the user position and resets the venter pin as well
+	$.fn.MapMe.updateLocation = function(mapObject, opts)
+	{
+		// get the users current position
+		$.fn.MapMe.getUserPosition(mapObject, opts);
+		// set the timer up again
+		//console.log("updating location");
+		var trackingTimer = setTimeout(function(){$.fn.MapMe.updateLocation(mapObject, opts)}, opts.trackingPeriod);
 	};
 	
 	// set the markers onto the map
@@ -214,7 +307,7 @@
 							position: pinPosition,
 							map: mapObject,
 							title: pin["title"] 
-						});
+						});					
 				}
 								
 				// add info windows here
@@ -233,34 +326,32 @@
 			}
 			
 		}
-		//console.log(markerArray);
-		// else if there is an option to drop a pin on the center of the map, then do that
-		if (opts.pinCenter == true)
-		{
-			var centerMarker = $.fn.MapMe.addCentrePin(mapObject, opts);
-			// add the center pin to the array of markers
-			// if I want to add the center pin to marker manager I would put an option to test and then run this next line
-			// markerArray.push(centerMarker);
-		}
 		
 		return markerArray;
 	};
 	
 	// add center pin to the map
-	$.fn.MapMe.addCentrePin = function(mapObject, opts)
+	$.fn.MapMe.addCentrePin = function(mapObject, opts, centerPosition)
 	{
+		var marker;				
 		if (opts.centerMarker["pin"])
-		{
-			var marker = $.fn.MapMe.customPin(mapObject, opts, opts.centerMarker);
+		{	
+			
+			var centerPin = {};
+			centerPin.lat = centerPosition[0];
+			centerPin.lng = centerPosition[1];
+			centerPin.title = opts.centerMarker.title;
+			centerPin.pin = opts.centerMarker.pin;
+			marker = $.fn.MapMe.customPin(mapObject, opts, centerPin);
 		}
 		else
-		{
+		{			
 			marker = new google.maps.Marker({
-				position: opts.mapOptions.center,
+				position: new google.maps.LatLng(centerPosition[0], centerPosition[1]),
 				title: opts.centerMarker["title"],
 				map: mapObject
 			});
-			marker.setMap(mapObject);
+			marker.setMap(mapObject);			
 		}
 		
 		// set the info window for the center marker
@@ -270,9 +361,24 @@
 			$.fn.MapMe.addInfoWindow(mapObject, opts, marker, infoWindow);
 		}
 		
+		var circle = {
+			strokeColor: "#4d9cff",
+			strokeOpacity: 0.4,
+		    strokeWeight: 2,
+		    fillColor: "#4d9cff",
+		    fillOpacity: 0.15,
+		    map: mapObject,
+		    center: new google.maps.LatLng(centerPosition[0], centerPosition[1]),
+		    radius : 200
+		};
+		if (opts.trackingCircle == true)
+		{
+			mapObject.centerOverlay = new google.maps.Circle(circle);
+		}
+		
 		return marker;
 	};
-	
+
 	// make a custom pin for the marker and then drop it onto the map
 	$.fn.MapMe.customPin = function(mapObject, opts, pin)
 	{		
@@ -283,7 +389,7 @@
 		{
 			alert("custom pin has not been defined properly");
 		}	
-		// console.log(pinReference);
+		//console.log(pinReference);
 		// custom pin image parameters			
 		var image = new google.maps.MarkerImage(
 						opts.customPins[pinReference].pinImg,
@@ -306,9 +412,7 @@
 			shape = "";
 		}	
 		// set custom pin position	
-		var pinPosition = new google.maps.LatLng(pin["lat"], pin["lng"]);
-		
-		//console.log(pinPosition);
+		var pinPosition = new google.maps.LatLng(pin.lat, pin.lng);		
 		// make the marker and put it onto the map
 		var marker = new google.maps.Marker({
 			position: pinPosition,

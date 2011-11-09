@@ -21,12 +21,12 @@
     <script language="javascript" type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
     <script language="javascript" type="text/javascript" src="js/markermanager.js"></script>    
     <script language="javascript" type="text/javascript" src="js/markercluster.js"></script>  
-    <script language="javascript" type="text/javascript" src="js/map1.0.js"></script>
+    <script language="javascript" type="text/javascript" src="js/map1.1.js"></script>
     <script language="javascript" type="text/javascript">
     		$(document).ready(function(){
 				$("#mapPane").MapMe({
 					mapCanvas : 'mapPane',
-					mapCenter : [-33.890542, 151.374856],
+					mapCenter : false,
 					markerCluster : true,
 					markers : [							  				
 								{
@@ -65,7 +65,10 @@
 									lng: 151.259302, 
 									pin: "myCustomPin", 
 									infoWindow: "<h1>Maroubra Info Window Content</h1><p>lorem ipsum</p>"}
-							  ],					   
+							  ],
+					mapOptions : 	{
+						center : [-33.782542, 151.111856]
+									}					   
 				});
 				
 			});
