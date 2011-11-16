@@ -24,7 +24,9 @@
 //			- added option to 'track' the user on the map. this will add a center pin, on a given time period it will update the maps center position
 //			- fixed issues with the definition of the center pin. now you can define your own center pin
 //			- renaming a few variables so that they make a little more sense
-//			- combined mapCenter and trackLOcation variables :)
+//			- combined mapCenter and trackLocation variables :)
+// v 1.3	- added an option in the pin to add a custom function for that pin which is not a map event. Originally for changing the pin marker image on the fly.
+//			- the first thing is the pass the pin through, then maybe pass some options
 //
 //	IMPORTANT!!! - I'm still trying to make this work on the happy hour app
 
@@ -299,7 +301,8 @@
 			infoWindow,
 			pinEvents,
 			currentPin,
-			pinPosition;
+			pinPosition,
+			pinFunction;
 			
 		if (markerLength > 0)
 		{
@@ -308,6 +311,7 @@
 				pin = markers[i];				
 				infoWindow = markers[i].infoWindow;
 				pinEvents = markers[i].pinEvent;
+				pinFunction = markers[i].pinFunction;
 				// check to see if a custom pin has been assigned - else drop in a regular pin
 				// i need to return the marker so I can attach events to it in a different function
 				if (markers[i].pin)
@@ -336,6 +340,12 @@
 				if (pinEvents)
 				{
 					$.fn.MapMe.addPinEvents(pinEvents, currentPin);
+				}
+				
+				// add a custom function to the pin which is not a map event
+				if (pinFunction)
+				{
+					pinFunction(currentPin, mapObject, opts);
 				}
 				// store all the pins together into an array
 				markerArray.push(currentPin);

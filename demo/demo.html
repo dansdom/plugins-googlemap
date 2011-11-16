@@ -21,9 +21,10 @@
     <script language="javascript" type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
     <script language="javascript" type="text/javascript" src="js/markermanager.js"></script>    
     <script language="javascript" type="text/javascript" src="js/markercluster.js"></script>  
-    <script language="javascript" type="text/javascript" src="js/map1.1.js"></script>
+    <script language="javascript" type="text/javascript" src="js/map1.2.js"></script>
     <script language="javascript" type="text/javascript">
     		$(document).ready(function(){
+    			var myPinData = "here is some data I want to pass";
 				$("#mapPane").MapMe({
 					mapCanvas : 'mapPane',					
 					markerCluster : true,
@@ -36,7 +37,10 @@
 									infoWindow: "<h1>Bondi Info Window Content</h1><p>lorem ipsum</p>",
 									pinEvent: {
 										'click': function(){alert("you clicked me!");},
-										'mouseover' : function(){console.log("you moused over me!");}}},
+										'mouseover' : function(){console.log("you moused over me!");}},
+									pinFunction : function(pin)
+									{
+										changeMarkerImage(pin);}},
 								{
 									title: 'Coogee Beach', 
 									lat: -33.923036, 
@@ -69,6 +73,17 @@
 						center : [-33.782542, 151.111856]
 									}					   
 				});
+				
+				function changeMarkerImage(pin)
+				{
+					pin.title = "This pin has a new image!";
+					var newImage = new google.maps.MarkerImage(
+						"img/pin-grey.png",
+						new google.maps.Size(36, 55),
+						new google.maps.Point(0, 0),
+						new google.maps.Point(18, 55));
+					pin.icon = newImage;
+				}
 				
 			});
     </script>
