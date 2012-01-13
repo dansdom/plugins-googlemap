@@ -502,7 +502,7 @@
 	// props to https://github.com/jsor/jcarousel/blob/master/src/jquery.jcarousel.js for the base of the code & http://isotope.metafizzy.co/ for a good implementation
 	$.fn.mapMe = function(options, callback) {
 		// define the plugin name here so I don't have to change it anywhere else. This name refers to the jQuery data object that will store the plugin data
-		var pluginName = "pluginName",
+		var pluginName = "MapMe",
 			args;
 		
 		// if the argument is a string representing a plugin method then test which one it is
