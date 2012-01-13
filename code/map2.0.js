@@ -252,20 +252,20 @@
 			// console.log(position);
 			var userPosition = new google.maps.LatLng(position[0], position[1]);
 			// console.log(position);
-			if (!this.mapObject.centerSet)
+			if (!this.el.mapObject.centerSet)
 			{
-				this.mapObject.setCenter(userPosition);
+				this.el.mapObject.setCenter(userPosition);
 			}
-			this.mapObject.centerSet = true;
+			this.el.mapObject.centerSet = true;
 			
 			// if putting a pin in the center of the map then do so
 			if (this.opts.pinCenter === true) 
 			{
 				// if the map already has a center pin then remove it
-				if (this.mapObject.centerMarker)
+				if (this.el.mapObject.centerMarker)
 				{
-					this.mapObject.centerMarker.setMap(null);
-					this.mapObject.centerOverlay.setMap(null);
+					this.el.mapObject.centerMarker.setMap(null);
+					this.el.mapObject.centerOverlay.setMap(null);
 				}
 				// need to fill out the center marker here:
 				// I'll need to contruct the center pin object from the map location
@@ -279,7 +279,7 @@
 				} 
 				// then call the addCenterPin function
 				
-				this.mapObject.centerMarker = this.addCentrePin(position);
+				this.el.mapObject.centerMarker = this.addCentrePin(position);
 				// going to test creating a circle around the center pin - this is only for beer app for now, but will put it into the plugin later.			
 			}
 		},
@@ -380,7 +380,7 @@
 				centerPin.lng = centerPosition[1];
 				centerPin.title = this.opts.centerMarker.title;
 				centerPin.pin = this.opts.centerMarker.pin;
-				marker = this.customPin(mapObject, opts, centerPin);
+				marker = this.customPin(centerPin);
 			}
 			else
 			{			
@@ -411,7 +411,7 @@
 			};
 			if (this.opts.trackingCircle === true)
 			{
-				this.mapObject.centerOverlay = new google.maps.Circle(circle);
+				this.el.mapObject.centerOverlay = new google.maps.Circle(circle);
 			}
 			
 			return marker;
