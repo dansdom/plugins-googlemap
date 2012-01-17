@@ -171,11 +171,11 @@
 			}
 			// if not current but pinCenter is true, then add a pin in the center
 			else if (this.opts.pinCenter === true)
-			{				
-				this.el.centerPosition = [this.opts.mapOptions.center.Oa, this.opts.mapOptions.center.Pa];
-				this.el.mapObject.centerMarker = this.addCentrePin();
+			{
+				this.el.centerPosition = [this.opts.mapOptions.center.Pa, this.opts.mapOptions.center.Qa];
+				this.el.mapObject.centerMarker = this.addCentrePin(this.el.centerPosition);
 			}
-								
+			
 			// add the markers to the map, return the array of markers
 			this.el.mapMarkers = this.setMarkers();
 			
@@ -249,7 +249,6 @@
 			// need to make this conditional and if setting center then do it
 			// also I will need to only set this the first time as I got this function going through a loop
 			// console.log(position);
-			// console.log(position);
 			var userPosition = new google.maps.LatLng(position[0], position[1]);
 			// console.log(position);
 			if (!this.el.mapObject.centerSet)
@@ -278,7 +277,6 @@
 					this.opts.centerMarker.lng = position[0];
 				} 
 				// then call the addCenterPin function
-				
 				this.el.mapObject.centerMarker = this.addCentrePin(position);
 				// going to test creating a circle around the center pin - this is only for beer app for now, but will put it into the plugin later.			
 			}
